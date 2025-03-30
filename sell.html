@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell Products - Agriculture Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <h1 class="logo">FarmEase</h1>
+        </div>
+        <nav style="background-color: #27dd2797; padding: 10px;">
+            <a href="home.html">Home</a> |
+            <a href="sell.html">Sell Products</a> |
+            <a href="#">Search</a> |
+            <a href="#">Account</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="sell-product-form">
+            <h2>Sell Your Product</h2>
+            <form id="sell-product-form" action="sell_product.php" method="POST" enctype="multipart/form-data">
+                <label for="product-name">Product Name:</label>
+                <input type="text" id="product-name" name="name" required>
+
+                <label for="price">Price (₹):</label>
+                <input type="number" id="price" name="price" min="0" required>
+
+                <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                    <option value="Fruits">Fruits</option>
+                    <option value="Vegetables">Vegetables</option>
+                    <option value="Tools">Tools</option>
+                   
+                </select>
+
+                <label for="stock">Stock (kg):</label>
+                <input type="number" id="stock" name="stock" min="0" required>
+
+                <label for="farmer-name">Farmer Name:</label>
+                <input type="text" id="farmer-name" name="farmer_name" required>
+
+                <label for="phone-number">Phone Number:</label>
+                <input type="tel" id="phone-number" name="phone_number" required>
+
+                <label for="farmer_email">Farmer Email:</label>
+                <input type="email" id="farmer_email" name="farmer_email" required>
+
+                <label for="product_image">Product Image URL:</label>
+                <input type="url" name="product_image" required><br>
+
+                <button type="submit">Submit Product</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Weather Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin-top:20px ;
+            margin: 0;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url(https://i.pinimg.com/736x/aa/c4/66/aac466016828b80d8b2aaf401e21cadf.jpg);
+        }
+
+        .weather-card {
+            width: 390px;
+
+            padding: 40px;
+            margin-top: 20px;
+            margin-left: 37%;
+            border-radius: 15px;
+            justify-content: center;
+            background: #ffffff97;
+            color: linear-gradient(to bottom, #3578E5, #2A5DAC);
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .location {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .temp-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .temp {
+            font-size: 50px;
+            font-weight: bold;
+        }
+
+        .weather-icon {
+            font-size: 50px;
+            margin-right: 10px;
+        }
+
+        .details {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .forecast-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .forecast-box {
+            width: 55px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .see-more {
+            margin-top: 15px;
+            padding: 8px;
+            background: white;
+            color: #3578E5;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .full-forecast {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .day-forecast {
+            font-size: 14px;
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header style="margin: 0%;">
+        <div class="navbar" style="background-color: #ffffff97; text-align: center; height: 60px; line-height: 60px;">
+            <h1 class="logo" style="margin: 0; font-family: 'Playfair Display', serif;font-weight: bolder">FarmEase</h1>
+        </div>
+        
+        <nav style="background-color: #ffffff97; padding: 10px; text-align: center;">
+            <a href="home.html">Home</a> |
+            <a href="sell.html">Sell Products</a> |
+            <a href="plant.html">Plant Disease Prediction</a> |
+            <a href="account.php">Account</a> 
+
+        </nav>
+    </header>
+    <div class="weather-card">
+        <div class="location">Live Weather Report</div>
+        <div class="temp-container">
+            <span class="weather-icon" id="weather-icon">☀️</span>
+            <span class="temp" id="temp">--°C</span>
+        </div>
+        <div class="details">
+            Feels like <span id="feels-like">--°C</span> | 💨 Wind: <span id="wind">-- kph</span> | 💧 Humidity: <span id="humidity">--%</span>
+        </div>
+
+        <div class="forecast-container" id="forecast"></div>
+
+        <div class="see-more" id="seeMoreBtn">Extended Weather Forecast</div>
+
+        <div class="full-forecast" id="fullForecast"></div>
+    </div>
+
+    <script>
+        const apiKey = "1b8c69e86e960c186cb3a038e93a31d5";
+
+        function getWeather(lat, lon) {
+            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    const condition = data.weather[0].main;
+                    const temp = Math.round(data.main.temp);
+                    const feelsLike = Math.round(data.main.feels_like);
+                    const humidity = data.main.humidity;
+                    const windSpeed = Math.round(data.wind.speed * 3.6);
+
+                    const weatherIcons = { "Thunderstorm": "⛈️", "Drizzle": "🌦️", "Rain": "🌧️", "Snow": "❄️", "Clear": "☀️", "Clouds": "☁️" };
+                    const icon = weatherIcons[condition] || "❓";
+
+                    document.getElementById("temp").textContent = `${temp}°C`;
+                    document.getElementById("feels-like").textContent = `${feelsLike}°C`;
+                    document.getElementById("humidity").textContent = `${humidity}%`;
+                    document.getElementById("wind").textContent = `${windSpeed} kph`;
+                    document.getElementById("weather-icon").textContent = icon;
+
+                    getForecast(lat, lon);
+                });
+        }
+
+        function getForecast(lat, lon) {
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    const forecastDiv = document.getElementById("forecast");
+                    forecastDiv.innerHTML = "";
+
+                    for (let i = 0; i < 5; i++) {
+                        const hourData = data.list[i];
+                        const time = new Date(hourData.dt * 1000).getHours() + ":00";
+                        const temp = Math.round(hourData.main.temp);
+                        forecastDiv.innerHTML += `<div class="forecast-box"><b>${time}</b><br>${temp}°C</div>`;
+                    }
+                });
+        }
+
+        function getFullForecast(lat, lon) {
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    const fullForecastDiv = document.getElementById("fullForecast");
+                    fullForecastDiv.innerHTML = "";
+                    fullForecastDiv.style.display = "block";
+
+                    for (let i = 8; i < 40; i += 8) {
+                        const dayData = data.list[i];
+                        const date = new Date(dayData.dt * 1000).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" });
+                        const dayName = new Date(dayData.dt * 1000).toLocaleDateString("en-US", { weekday: "long" });
+                        const temp = Math.round(dayData.main.temp);
+                        const condition = dayData.weather[0].main;
+
+                        fullForecastDiv.innerHTML += `<div class="day-forecast">${date} ${dayName} ${temp}°C ${condition}</div>`;
+                        
+                        if (fullForecastDiv.childElementCount === 5) break;
+                    }
+                });
+        }
+
+        document.getElementById("seeMoreBtn").onclick = function () {
+            getFullForecast(10, 76);
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            position => getWeather(position.coords.latitude, position.coords.longitude),
+            () => getWeather(10, 76)
+        );
+    </script>
+</body>
+</html>

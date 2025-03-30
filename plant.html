@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 90%;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        .upload-box {
+            border: 2px dashed #28a745;
+            padding: 40px;
+            cursor: pointer;
+            background: #f9f9f9;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .upload-box:hover {
+            background: #e8f5e9;
+        }
+        .result-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .result-section img {
+            max-width: 300px;
+            max-height: 300px;
+            width: auto;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h2, p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: center;
+            max-width: 90%;
+        }
+    </style>
+</head>
+<header style="margin-bottom: 10px;">
+    <div class="navbar" style="background-color: #27dd2797; text-align: center; height: 60px; line-height: 60px;">
+        <h1 class="logo" style="margin: 0;">FarmEase</h1>
+    </div>
+    
+    <nav style="background-color: #27dd2797; padding: 10px; text-align: center;">
+        <a href="home.html">Home</a> |
+        <a href="sell.html">Sell Products</a> |
+        <a href="account.php">Account</a> |
+        <a href="weather_index.html">weather</a>
+
+    </nav>
+</header>
+<body style="margin: 0%;padding: 0%;">
+    <div class="container">
+        <h1>Plant Disease Detection</h1>
+        <div id="uploadBox" class="upload-box">
+            <p>Drag & Drop an image here or Click to Upload</p>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        </div>
+        <button id="uploadBtn">Upload & Predict</button>
+        <div class="result-section">
+            <img id="previewImage" src="" alt="Uploaded Image" style="display: none;">
+            <h2 id="diseaseName"></h2>
+            <p id="diseaseSuggestion"></p>
+        </div>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById("uploadBox");
+        const imageInput = document.getElementById("imageInput");
+        const previewImage = document.getElementById("previewImage");
+        const diseaseName = document.getElementById("diseaseName");
+        const diseaseSuggestion = document.getElementById("diseaseSuggestion");
+        let uploadedFile = null;
+
+        uploadBox.addEventListener("click", () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener("change", function() {
+            handleFile(this.files[0]);
+        });
+
+        uploadBox.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadBox.style.background = "#e8f5e9";
+        });
+
+        uploadBox.addEventListener("dragleave", () => {
+            uploadBox.style.background = "#f9f9f9";
+        });
+
+        uploadBox.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadBox.style.background = "#f9f9f9";
+            let file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        function handleFile(file) {
+            if (!file || !file.type.startsWith("image/")) {
+                alert("Please upload a valid image file.");
+                return;
+            }
+
+            // Reset previous disease and suggestion
+            diseaseName.innerText = "";
+            diseaseSuggestion.innerText = "";
+
+            uploadedFile = file;
+            previewImage.src = URL.createObjectURL(file);
+            previewImage.style.display = "block";
+
+            let dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            imageInput.files = dataTransfer.files;
+        }
+
+        document.getElementById("uploadBtn").addEventListener("click", function() {
+            let file = uploadedFile || imageInput.files[0];
+
+            if (!file) {
+                alert("Please upload an image first!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch("http://127.0.0.1:5000/predict", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    diseaseName.innerText = "Disease: " + data.disease;
+
+                    let suggestions = {
+    "Apple___Apple_scab": "Use fungicides (captan, mancozeb), prune infected leaves.",
+    "Apple___Black_rot": "Remove mummified fruits, use copper-based sprays.",
+    "Apple___Cedar_apple_rust": "Remove cedar trees, apply fungicides.",
+    "Apple___healthy": "Maintain proper pruning and fertilization.",
+    
+    "Blueberry___healthy": "Maintain proper soil acidity (pH 4.5-5.5).",
+
+    "Cherry_(including_sour)___healthy": "Keep trees pruned and remove fallen leaves.",
+    "Cherry_(including_sour)___Powdery_mildew": "Use sulfur-based fungicides and avoid overhead watering.",
+
+    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": "Rotate crops, remove infected debris, and use fungicides.",
+    "Corn_(maize)___Common_rust_": "Use rust-resistant corn varieties and apply fungicides if severe.",
+    "Corn_(maize)___healthy": "Ensure proper soil nutrition and pest control.",
+    "Corn_(maize)___Northern_Leaf_Blight": "Rotate crops and apply fungicides.",
+
+    "Grape___Black_rot": "Remove diseased leaves and apply fungicides.",
+    "Grape___Esca_(Black_Measles)": "Prune infected vines and avoid excessive irrigation.",
+    "Grape___healthy": "Regular pruning and avoid over-fertilization.",
+    "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": "Use copper-based fungicides and remove infected leaves.",
+
+    "Orange___Haunglongbing_(Citrus_greening)": "Control psyllid insects, remove infected trees, and use resistant rootstocks.",
+
+    "Peach___Bacterial_spot": "Apply copper-based bactericides and plant resistant varieties.",
+    "Peach___healthy": "Prune for airflow and apply dormant oil sprays.",
+
+    "Pepper,_bell___Bacterial_spot": "Use copper sprays and plant resistant varieties.",
+    "Pepper,_bell___healthy": "Maintain proper spacing and avoid overhead watering.",
+
+    "Potato___Early_blight": "Rotate crops and apply fungicides.",
+    "Potato___healthy": "Ensure proper soil drainage and regular inspections.",
+    "Potato___Late_blight": "Apply copper-based fungicides and avoid excessive moisture.",
+
+    "Raspberry___healthy": "Ensure good drainage and prune excess growth.",
+    "Soybean___healthy": "Use crop rotation and disease-resistant varieties.",
+    "Squash___Powdery_mildew": "Apply sulfur-based fungicides and improve ventilation.",
+    "Strawberry___healthy": "Use well-drained soil and control pests.",
+    "Strawberry___Leaf_scorch": "Remove infected leaves and apply fungicides.",
+
+    "Tomato___Bacterial_spot": "Use copper fungicides and plant resistant varieties.",
+    "Tomato___Early_blight": "Remove infected leaves and apply fungicides.",
+    "Tomato___healthy": "Use mulch and ensure proper spacing.",
+    "Tomato___Late_blight": "Apply fungicides and avoid water accumulation.",
+    "Tomato___Leaf_Mold": "Improve airflow and apply copper fungicides.",
+    "Tomato___Septoria_leaf_spot": "Remove infected leaves and use organic fungicides.",
+    "Tomato___Spider_mites Two-spotted_spider_mite": "Use neem oil and introduce predatory mites.",
+    "Tomato___Target_Spot": "Apply fungicides and rotate crops.",
+    "Tomato___Tomato_mosaic_virus": "Remove infected plants and disinfect tools.",
+    "Tomato___Tomato_Yellow_Leaf_Curl_Virus": "Control whiteflies and plant resistant varieties."
+};
+
+
+                    diseaseSuggestion.innerText = "Suggestion: " + (suggestions[data.disease] || "No treatment information available.");
+                } else {
+                    diseaseName.innerText = "Error: Please upload plant image";
+                    
+                }
+            })
+            .catch(error => {
+                console.error("Fetch Error:", error);
+                alert("An error occurred. Check the console for details.");
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* General reset for margin and padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Ensure body takes full height */
+        html, body {
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Header styles */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* Navigation bar */
+        nav {
+            background-color: #27dd2797;
+            padding: 10px;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        nav a:hover {
+            color: #333;
+        }
+
+        /* Main product and purchase form container */
+        main {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 80vh;
+            padding: 20px;
+        }
+
+        /* Product details section */
+        .product-details {
+            width: 100%;
+            max-width: 800px; /* Optional: Limit the width */
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Product image styling */
+        #product-image {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        /* Headings */
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Product price and details */
+        #product-price {
+            font-size: 20px;
+            color: #27ae60;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #product-description, #farmer-contact, #stock-value, #farmer-email {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        /* Buttons */
+        button {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #2ecc71;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            main {
+                padding: 10px;
+            }
+
+            .product-details {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <h1 class="logo">FarmEase</h1>
+        </div>
+        <nav>
+            <a href="home.html">Home</a> |
+            <a href="sell.html">Sell Products</a> |
+            <a href="account.html">Account</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="product-details">
+            <h2 id="product-name">Loading...</h2>
+            <img id="product-image" alt="Product Image" style="width:50%; margin-bottom: 20px;">
+            <p id="product-description">Loading description...</p>
+            <p id="product-price" style="font-weight: bold;">Loading price...</p>
+            <p id="farmer-contact">Loading contact...</p>
+            <p id="farmer-email">Loading email...</p>
+            <p id="stock-value">Loading stock...</p>
+            <button onclick="buyNow()">Buy Now</button>
+        </section>
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        if (!productId) {
+            alert("No product selected....");
+            window.location.href = "home.html";
+        } else {
+            console.log("Product ID:", productId);
+
+            // Fetch product details
+            fetch(`product_details.php?id=${productId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error fetching product details: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(products => {
+                    if (products.length > 0) {
+                        const product = products[0];
+                        console.log("Product Details:", product);
+
+                        // Detect if it's a rental tool
+                        const isTool = product.category.toLowerCase() === "tools";
+                        const priceLabel = isTool ? "Rent per hour" : "Price per kg";
+                        const stockLabel = isTool ? "Available units" : "Stock";
+
+                        // Populate the product details
+                        document.getElementById("product-name").textContent = product.name || "Unknown Product";
+                        document.getElementById("product-image").src = product.product_image || "default-image.jpg";
+                        document.getElementById("product-description").textContent = 
+                            `Category: ${product.category} - By ${product.farmer_name}`;
+                        document.getElementById("product-price").textContent = `${priceLabel}: ₹${product.price}`;
+                        document.getElementById("farmer-contact").textContent = `Contact: ${product.phone_number}`;
+                        document.getElementById("farmer-email").textContent = `Email: ${product.farmer_email}`;
+                        document.getElementById("stock-value").textContent = `${stockLabel}: ${product.stock}`;
+
+                        // Store the product's price and stock for later use in the purchase form
+                        window.productPrice = parseFloat(product.price); 
+                        window.productStock = parseInt(product.stock);  
+                    } else {
+                        throw new Error("Product not found");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Failed to load product details....");
+                    window.location.href = "home.html";
+                });
+        }
+
+        function buyNow() {
+            
+            window.location.href = `purchase.html?id=${productId}`;
+        }
+    </script>
+</body>
+</html>
+
