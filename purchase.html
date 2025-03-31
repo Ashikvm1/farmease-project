@@ -27,10 +27,12 @@
             <h1>Cash on Delivery</h1>
             <p id="product-details"></p>
 
-            <label for="quantity" id="quantity-label">Quantity (kg):</label>
-            <input type="number" id="quantity" name="quantity" min="1" max="100" step="0.1" value="0" required>
+            <div id="quantity-section">
+                <label for="quantity" id="quantity-label">Quantity (kg):</label>
+                <input type="number" id="quantity" name="quantity" min="1" max="100" step="0.1" value="1" required>
+            </div>
 
-            <p>Total Price: ₹<span id="total-price">0.00</span></p>
+            <p id="total-price-section">Total Price: ₹<span id="total-price">0.00</span></p>
 
             <label for="address">Address:</label>
             <textarea id="address" name="address" required></textarea>
@@ -59,33 +61,39 @@
                 .then(products => {
                     if (products.length > 0) {
                         const product = products[0]; 
-
-                        // Check if the product is a tool
-                        const isTool = product.category.toLowerCase() === "tools";
-                        const priceLabel = isTool ? "Rent per hour" : "Price per kg";
-
-                        // Update quantity label for tools
-                        if (isTool) {
-                            document.getElementById("quantity-label").textContent = "Duration (hours):";
-                        }
-
-                        // Setting product details for display
-                        document.getElementById("product-details").textContent = `${priceLabel}: ₹${product.price}, Available Stock: ${product.stock}`;
-
-                        // Store product price & stock globally
+                        window.isTool = product.category.toLowerCase() === "tools";
                         window.productPrice = parseFloat(product.price);
                         window.productStock = parseInt(product.stock);
 
+                        const priceLabel = window.isTool ? "Rent per hour" : "Price per kg";
+
+                        // Hide quantity and total price for tools
+                        if (window.isTool) {
+                            document.getElementById("quantity-section").style.display = "none";
+                            document.getElementById("total-price-section").style.display = "none";
+                        }
+
+                        document.getElementById("product-details").textContent = 
+                            `${priceLabel}: ₹${window.productPrice}, Available Stock: ${window.productStock}`;
+
                         // Update total price dynamically
                         document.getElementById("quantity").addEventListener('input', function() {
-                            const quantity = parseFloat(this.value);
-                            if (quantity > window.productStock) {
+                            let quantity = window.isTool ? 1 : parseFloat(this.value);
+
+                            // **Fix: Stock validation only for non-tool products**
+                            if (!window.isTool && quantity > window.productStock) {
                                 alert("Insufficient stock available.");
-                                this.value = window.productStock;
+                                this.value = 0;
+                                quantity = 0;
                             }
-                            const totalPrice = window.productPrice * quantity;
-                            document.getElementById("total-price").textContent = totalPrice.toFixed(2);
+
+                            document.getElementById("total-price").textContent = 
+                                (window.productPrice * quantity).toFixed(2);
                         });
+
+                        // Initialize total price correctly
+                        document.getElementById("total-price").textContent = 
+                            (window.productPrice * parseFloat(document.getElementById("quantity").value || 0)).toFixed(2);
 
                     } else {
                         alert("Product not found.");
@@ -94,67 +102,65 @@
         }
 
         function submitPurchase(event) {
-    event.preventDefault();  // Prevent default form submission
+            event.preventDefault();
 
-    const quantity = parseFloat(document.getElementById("quantity").value);
-    const address = document.getElementById("address").value.trim();
-    const pin = document.getElementById("pin").value.trim();
-    const mobile = document.getElementById("mobile").value.trim();
+            const quantity = window.isTool ? 1 : parseFloat(document.getElementById("quantity").value);
+            const address = document.getElementById("address").value.trim();
+            const pin = document.getElementById("pin").value.trim();
+            const mobile = document.getElementById("mobile").value.trim();
 
-    // Mobile number validation (10 digits & starts with 6, 7, 8, or 9)
-    const mobilePattern = /^[6789]\d{9}$/;
-    if (!mobilePattern.test(mobile)) {
-        alert("Enter a valid phone number (10 digits, starting with 6, 7, 8, or 9).");
-        return;
-    }
+            // Mobile validation (10 digits, starting with 6, 7, 8, or 9)
+            const mobilePattern = /^[6789]\d{9}$/;
+            if (!mobilePattern.test(mobile)) {
+                alert("Enter a valid phone number (10 digits, starting with 6, 7, 8, or 9).");
+                return;
+            }
 
-    // Address validation (at least 10 characters, not just numbers)
-    if (address.length < 10 || /^\d+$/.test(address)) {
-        alert("Enter a valid address (at least 10 characters and not just numbers).");
-        return;
-    }
+            // Address validation (at least 10 characters, not just numbers)
+            if (address.length < 10 || /^\d+$/.test(address)) {
+                alert("Enter a valid address (at least 10 characters and not just numbers).");
+                return;
+            }
 
-    // PIN validation (exactly 6 digits)
-    const pinPattern = /^\d{6}$/;
-    if (!pinPattern.test(pin)) {
-        alert("Enter a valid PIN code (exactly 6 digits).");
-        return;
-    }
+            // PIN validation (exactly 6 digits)
+            const pinPattern = /^\d{6}$/;
+            if (!pinPattern.test(pin)) {
+                alert("Enter a valid PIN code (exactly 6 digits).");
+                return;
+            }
 
-    // Quantity validation
-    if (quantity <= 0 || quantity > window.productStock) {
-        alert("Please select a valid quantity.");
-        return;
-    }
+            // **Fix: Quantity validation only for products, NOT tools**
+            if (!window.isTool && (quantity <= 0 || quantity > window.productStock)) {
+                alert("Please select a valid quantity.");
+                return;
+            }
 
-    const formData = new FormData();
-    formData.append('id', productId);
-    formData.append('quantity', quantity);
-    formData.append('address', address);
-    formData.append('pin', pin);
-    formData.append('mobile', mobile);
+            const formData = new FormData();
+            formData.append('id', productId);
+            formData.append('quantity', quantity); // Always 1 for tools
+            formData.append('address', address);
+            formData.append('pin', pin);
+            formData.append('mobile', mobile);
 
-    // Process the purchase request
-    fetch('process_purchase.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Purchased successful!");
-            window.location.href = "home.html";
-        } else {
-            alert("Error in purchase. Please try again.");
+            // Process the purchase request
+            fetch('process_purchase.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Purchase successful!");
+                    window.location.href = "home.html";
+                } else {
+                    alert("Error in purchase. Please try again.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Failed to submit purchase.");
+            });
         }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("Failed to submit purchase.");
-    });
-}
-
     </script>
 </body>
 </html>
-
