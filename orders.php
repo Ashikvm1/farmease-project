@@ -99,7 +99,7 @@ $result = $stmt->get_result();
                     <select name="status">
                         <option value="Pending" <?php if ($row['status'] == 'Pending') echo "selected"; ?>>Pending</option>
                         <option value="Shipped" <?php if ($row['status'] == 'Shipped') echo "selected"; ?>>Shipped</option>
-                        <option value="Delivered" <?php if ($row['status'] == 'Delivered') echo "selected"; ?>>Delivered</option>
+                  
                     </select>
                     <button type="submit">Update</button>
                 </form>
