@@ -128,9 +128,15 @@
 
     <div class="container">
     
+    <div class="section">
+            <h2>My Orders</h2>
+            <button onclick="viewmyOrders()">View Orders</button>
+        </div>
+
+
 
         <div class="section">
-            <h2>Your Orders</h2>
+            <h2>Orders Received</h2>
             <button onclick="viewOrders()">View Orders</button>
         </div>
 
@@ -166,6 +172,11 @@
         function viewOrders() {
             
             window.location.href = "orders.php";
+        }
+
+        function viewmyOrders(){
+
+            window.location.href="my_orders.php";
         }
 
         function viewLists() {
